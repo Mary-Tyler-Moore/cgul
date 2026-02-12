@@ -89,15 +89,6 @@ Design rule:
 
 ---
 
-## Mascot art sizing
-
-These mascots are displayed at `width="240px"` in the README. For clean source art, use a tall portrait master such as:
-
-* **1024×2560** (recommended master size), or
-* **1196×2910** (if you want to match the earlier placeholders)
-
----
-
 ## Roadmap
 
 * **v0 (current):** cgul-core + terminal renderer, hit testing, frame export
