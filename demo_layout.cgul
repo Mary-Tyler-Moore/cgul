@@ -1,0 +1,65 @@
+{
+  "cgulVersion": "0.1",
+  "grid": {
+    "w": 60,
+    "h": 30
+  },
+  "seed": 157,
+  "widgets": [
+    {
+      "id": 1,
+      "kind": "window",
+      "bounds": {
+        "x": 18,
+        "y": 9,
+        "w": 10,
+        "h": 13
+      },
+      "title": "Window 1"
+    },
+    {
+      "id": 2,
+      "kind": "window",
+      "bounds": {
+        "x": 29,
+        "y": 4,
+        "w": 19,
+        "h": 7
+      },
+      "title": "Window 2"
+    },
+    {
+      "id": 3,
+      "kind": "window",
+      "bounds": {
+        "x": 35,
+        "y": 16,
+        "w": 10,
+        "h": 7
+      },
+      "title": "Window 3"
+    },
+    {
+      "id": 4,
+      "kind": "window",
+      "bounds": {
+        "x": 2,
+        "y": 3,
+        "w": 15,
+        "h": 8
+      },
+      "title": "Window 4"
+    },
+    {
+      "id": 5,
+      "kind": "window",
+      "bounds": {
+        "x": 3,
+        "y": 15,
+        "w": 13,
+        "h": 13
+      },
+      "title": "Window 5"
+    }
+  ]
+}
