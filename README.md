@@ -6,7 +6,7 @@
   <img src=".github/assets/readme/cgul-game-engine-ui.png" width="240" style="margin-right:16px; border-radius:12px;" />
   <div>
 
-**CGUL** is a **Glyph UI Layout** standard + C++ toolkit for representing UI as a **monospace cell grid** (glyphs).  
+**CGUL** is a **Glyph UI Layout** standard and C++ toolkit for representing UI as a **monospace cell grid** (glyphs).  
 
 The goal is simple:
 
@@ -222,6 +222,8 @@ cgul/
 
 ## License
 
-MIT
+This project is licensed under the terms of the [MIT License](LICENSE.md).
 
-```
+---
+
+© 2026 Mary-Tyler-Moore
