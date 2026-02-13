@@ -10,6 +10,7 @@ add_library(cgul_core
   src/cgul_document.cpp
   src/validate.cpp
   src/layout_composer.cpp
+  src/equality.cpp
 )
 target_include_directories(cgul_core PUBLIC include)
 target_compile_features(cgul_core PUBLIC cxx_std_20)
@@ -24,3 +25,12 @@ add_executable(cgul_cli
   apps/cgul_cli/main.cpp
 )
 target_link_libraries(cgul_cli PRIVATE cgul_core)
+
+add_executable(cgul_smoke
+  apps/cgul_tests_smoke/main.cpp
+)
+target_link_libraries(cgul_smoke PRIVATE cgul_core)
+
+enable_testing()
+add_test(NAME cgul_smoke COMMAND cgul_smoke)
+set_tests_properties(cgul_smoke PROPERTIES WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
