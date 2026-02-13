@@ -1,0 +1,65 @@
+{
+  "cgulVersion": "0.1",
+  "grid": {
+    "w": 60,
+    "h": 20
+  },
+  "seed": 42,
+  "widgets": [
+    {
+      "id": 1,
+      "kind": "window",
+      "bounds": {
+        "x": 1,
+        "y": 1,
+        "w": 24,
+        "h": 8
+      },
+      "title": "Main Window"
+    },
+    {
+      "id": 2,
+      "kind": "window",
+      "bounds": {
+        "x": 30,
+        "y": 2,
+        "w": 26,
+        "h": 7
+      },
+      "title": "Inspector"
+    },
+    {
+      "id": 3,
+      "kind": "panel",
+      "bounds": {
+        "x": 2,
+        "y": 11,
+        "w": 20,
+        "h": 6
+      },
+      "title": "Tools"
+    },
+    {
+      "id": 4,
+      "kind": "button",
+      "bounds": {
+        "x": 25,
+        "y": 12,
+        "w": 14,
+        "h": 4
+      },
+      "title": "Generate"
+    },
+    {
+      "id": 5,
+      "kind": "label",
+      "bounds": {
+        "x": 42,
+        "y": 12,
+        "w": 16,
+        "h": 3
+      },
+      "title": "Status: OK"
+    }
+  ]
+}

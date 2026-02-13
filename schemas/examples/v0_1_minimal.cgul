@@ -1,0 +1,21 @@
+{
+  "cgulVersion": "0.1",
+  "grid": {
+    "w": 20,
+    "h": 8
+  },
+  "seed": 0,
+  "widgets": [
+    {
+      "id": 1,
+      "kind": "window",
+      "bounds": {
+        "x": 1,
+        "y": 1,
+        "w": 18,
+        "h": 6
+      },
+      "title": "Main"
+    }
+  ]
+}

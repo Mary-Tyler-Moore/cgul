@@ -7,6 +7,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_library(cgul_core
   src/frame.cpp
+  src/cgul_document.cpp
+  src/validate.cpp
+  src/layout_composer.cpp
 )
 target_include_directories(cgul_core PUBLIC include)
 target_compile_features(cgul_core PUBLIC cxx_std_20)
