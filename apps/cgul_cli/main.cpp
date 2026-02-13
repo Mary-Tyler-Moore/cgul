@@ -3,6 +3,7 @@
 #include "cgul/render/layout_composer.h"
 #include "cgul/validate/validate.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <iostream>
 #include <random>
@@ -188,9 +189,9 @@ cgul::RectI GenerateRect(std::mt19937_64& rng, int gridW, int gridH, cgul::Widge
   int maxH = 8;
 
   if (kind == cgul::WidgetKind::Window) {
-    minW = 14;
+    minW = 18;
     maxW = 26;
-    minH = 5;
+    minH = 6;
     maxH = 10;
   } else if (kind == cgul::WidgetKind::Label) {
     minW = 10;
@@ -267,9 +268,18 @@ cgul::CgulDocument GenerateSampleDocument(uint64_t seed) {
     }
 
     if (!placed) {
+      int fallbackW = 10;
+      int fallbackH = 4;
+      if (kind == cgul::WidgetKind::Window) {
+        fallbackW = 18;
+        fallbackH = 6;
+      }
+      fallbackW = std::max(1, std::min(fallbackW, doc.gridWCells));
+      fallbackH = std::max(1, std::min(fallbackH, doc.gridHCells));
+
       for (int y = 0; y < doc.gridHCells && !placed; ++y) {
         for (int x = 0; x < doc.gridWCells && !placed; ++x) {
-          cgul::RectI rect{x, y, 10, 4};
+          cgul::RectI rect{x, y, fallbackW, fallbackH};
           if (rect.x + rect.w > doc.gridWCells || rect.y + rect.h > doc.gridHCells) {
             continue;
           }

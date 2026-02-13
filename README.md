@@ -2,67 +2,73 @@
 
 # CGUL (Seagull)
 
-<div style="display:flex; gap:16px; align-items:flex-start;">
-  <img src=".github/assets/readme/cgul-game-engine-ui.png" width="240" style="margin-right:16px; border-radius:12px;" />
-  <div>
-
-**CGUL** is a **Glyph UI Layout** standard and C++ toolkit for representing UI as a **monospace cell grid** (glyphs).  
+**CGUL** is a **Glyph UI Layout** standard and C++ toolkit for representing UI as a **monospace cell grid** (glyphs).
 
 The goal is simple:
 
-**One UI meaning → multiple renderers.**  
+**One UI meaning → multiple renderers.**
 Build UI once, then render it as pixels *or* as a clean glyph view for developer mode, accessibility, low-motion options, headless inspection, and debugging.
 
 CGUL is intentionally **portable**:
-- **`cgul-core` is engine-agnostic** (no SFML/SDL/ImGui/Qt/Godot types)
-- UI frameworks integrate via **thin adapters**
-- `.cgul` files provide a stable interchange format you can load/save/replay
 
-  </div>
-</div>
+* **`cgul-core` is engine-agnostic** (no SFML/SDL/ImGui/Qt/Godot types)
+* UI frameworks integrate via **thin adapters**
+* `.cgul` files provide a stable interchange format you can load/save/replay
 
 ---
-
-<div style="display:flex; gap:16px; align-items:flex-start; justify-content:space-between;">
-  <div style="flex:1;">
 
 ## Why CGUL exists
 
 Modern UI stacks are powerful—but they’re often difficult to:
-- inspect quickly,
-- snapshot deterministically,
-- test and replay,
-- or simplify for low-distraction / reduced motion workflows.
+
+* inspect quickly,
+* snapshot deterministically,
+* test and replay,
+* or simplify for low-distraction / reduced motion workflows.
 
 CGUL adds a **semantic, deterministic representation** of UI that is:
-- **diff-friendly** (`.cgul` JSON subset, stable formatting),
-- **replayable** (seeded generation + exact bounds),
-- **testable** (round-trip + validation smoke tests),
-- and **renderer-agnostic** (pixel UI today, glyph UI tomorrow, engine overlays later).
-  </div>
-  <img src=".github/assets/readme/cgul-vst-ui.png" width="240" style="margin-left:16px; border-radius:12px;" />
-</div>
+
+* **diff-friendly** (`.cgul` JSON subset, stable formatting),
+* **replayable** (seeded generation + exact bounds),
+* **testable** (round-trip + validation smoke tests),
+* and **renderer-agnostic** (pixel UI today, glyph UI tomorrow, engine overlays later).
 
 ---
 
 ## What’s in this repo
 
 ### ✅ CGUL v0.1 standard seed
-- `docs/spec.md` — semantic model (what the data *means*)
-- `docs/format_cgul.md` — `.cgul` file format (what the bytes *look like*)
-- `schemas/examples/` — example `.cgul` documents
-- `include/cgul/` + `src/` — portable core + IO + validation + rendering helpers
+
+* `docs/spec.md` — semantic model (what the data *means*)
+* `docs/format_cgul.md` — `.cgul` file format (what the bytes *look like*)
+* `schemas/examples/` — example `.cgul` documents
+* `include/cgul/` + `src/` — portable core + IO + validation + rendering helpers
 
 ### ✅ Tools
-- `cgul_cli` — terminal renderer + `.cgul` save/load + hit-test + JSON frame dump
-- `cgul_smoke` — round-trip regression tests for every example under `schemas/examples/`
+
+* `cgul_cli` — terminal renderer + `.cgul` save/load + hit-test + JSON frame dump
+* `cgul_smoke` — round-trip regression tests for every example under `schemas/examples/`
 
 ### ✅ Flagship demo (SFML 3)
-- `cgul_demo_sfml` — deterministic UI generator + editor:
-  - generate random window layouts from a seed
-  - drag to move, resize with a handle
-  - validation-gated edits (invalid overlaps/out-of-bounds are rejected)
-  - save/load `.cgul` with round-trip equality verification
+
+* `cgul_demo_sfml` — deterministic UI generator + editor:
+
+  * generate random window layouts from a seed
+  * drag to move, resize with a handle
+  * validation-gated edits (invalid overlaps/out-of-bounds are rejected)
+  * save/load `.cgul` with round-trip equality verification
+
+---
+
+## CGUL Demo (Pixel ↔ Glyph)
+
+![CGUL Demo — Pixel and Glyph modes](.github/assets/readme/cgul-demo.gif)
+
+This GIF shows the flagship SFML demo generating the same deterministic window layout and toggling between:
+- **Pixel mode** (traditional rendering), and
+- **Glyph mode** (CGUL cell-grid rendering)
+
+Same UI meaning. Two renderers. One `.cgul` document.
 
 ---
 
@@ -73,15 +79,47 @@ CGUL adds a **semantic, deterministic representation** of UI that is:
 This is the current “CGUL in action” reference app: **generate → edit → save/load** a `.cgul` layout with deterministic behavior.
 
 Controls:
-- `G` / **Generate** button: create a new deterministic layout
-- Drag **title bar**: move window (snaps to cell grid)
-- Drag **bottom-right handle**: resize window (snaps to cell grid)
-- `S`: save to `demo_layout.cgul`
-- `L`: load from `demo_layout.cgul`
-- `F3`: toggle grid
-- `+` / `-`: increase / decrease window count
+
+* `F1`: toggle Pixel/Glyph mode
+* `G` / **Generate** button: create a new deterministic layout
+* Drag **title bar**: move window (snaps to cell grid)
+* Drag **bottom-right handle**: resize window (snaps to cell grid)
+* Minimum window size: `18x6` cells
+* `S`: save to `demo_layout.cgul`
+* `L`: load from `demo_layout.cgul`
+* `F3`: toggle grid (line grid in Pixel mode, dotted glyph background in Glyph mode)
+* `+` / `-`: increase / decrease window count
 
 Details: `docs/demo_app.md`
+
+The SFML demo uses a single repo-owned monospace font: `assets/fonts/cgul_mono.ttf`.
+
+---
+
+## Milestones
+
+### Step 01 — CGUL v0.1 foundation ✅
+- Defined the **semantic document model** (`CgulDocument`: widgets, bounds, grid, ids)
+- Implemented deterministic **`.cgul` IO** (tiny JSON subset reader/writer)
+- Added **validation rules** (bounds, ids, overlap rejection)
+- Added layout composition: `CgulDocument → Frame`
+
+### Step 02 — Format stability enforced ✅
+- Added `cgul_smoke` to round-trip **every** `schemas/examples/*.cgul`
+- Test flow: **load → validate → save → reload → semantic-compare**
+- Protects the format while we iterate quickly
+
+### Step 03 — Flagship demo app v0 ✅
+- Built `cgul_demo_sfml` (SFML 3) as the “CGUL in action” reference:
+  - seed-based deterministic generation
+  - drag-to-move, resize handle, snap-to-cell editing
+  - save/load `.cgul` with validation + equality check
+
+### Step 04 — Live Pixel ↔ Glyph toggle ✅
+- Added real-time `F1` toggle between:
+  - **Pixel renderer** (rectangles + SFML text)
+  - **Glyph renderer** (composed `cgul::Frame` drawn as a cell grid)
+- Added aligned grid background (`F3`) and minimum window sizes to keep text readable
 
 ---
 
@@ -93,7 +131,7 @@ Details: `docs/demo_app.md`
 cd cgul
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
-````
+```
 
 Run the CLI:
 

@@ -52,6 +52,7 @@ if (CGUL_BUILD_SFML_DEMO)
 
   add_executable(cgul_demo_sfml
     apps/cgul_demo_sfml/main.cpp
+    apps/cgul_demo_sfml/glyph_grid_renderer.cpp
   )
   target_link_libraries(cgul_demo_sfml PRIVATE cgul_core SFML::Graphics SFML::Window SFML::System)
 endif()

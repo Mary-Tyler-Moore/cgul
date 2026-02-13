@@ -20,18 +20,54 @@ bool InBounds(const Frame& frame, int x, int y) {
   return x >= 0 && y >= 0 && x < frame.width && y < frame.height;
 }
 
-void DrawWindowTitleBar(Frame& frame, int x0, int x1, int y, uint32_t widgetId) {
-  if (y < 0 || y >= frame.height) {
+void DrawBoxBorder(Frame& frame, int x0, int y0, int x1, int y1, uint32_t widgetId) {
+  for (int y = y0; y <= y1; ++y) {
+    for (int x = x0; x <= x1; ++x) {
+      if (!InBounds(frame, x, y)) {
+        continue;
+      }
+
+      Cell& c = frame.at(x, y);
+      const bool left = (x == x0);
+      const bool right = (x == x1);
+      const bool top = (y == y0);
+      const bool bottom = (y == y1);
+
+      if (top) {
+        if (left || right) {
+          c.glyph = U'#';
+        } else {
+          c.glyph = U'=';
+        }
+      } else if (bottom || left || right) {
+        c.glyph = U'#';
+      } else {
+        c.glyph = U' ';
+      }
+
+      c.widgetId = widgetId;
+    }
+  }
+}
+
+void DrawClippedText(Frame& frame, int x, int y, const std::string& text, int maxWidth,
+                     uint32_t widgetId) {
+  if (maxWidth <= 0 || text.empty() || y < 0 || y >= frame.height || x >= frame.width) {
     return;
   }
-  for (int x = x0 + 1; x <= x1 - 1; ++x) {
-    if (!InBounds(frame, x, y)) {
-      continue;
-    }
-    Cell& c = frame.at(x, y);
-    c.glyph = U'=';
-    c.widgetId = widgetId;
+
+  const int startX = std::max(0, x);
+  const int visibleWidth = std::min(maxWidth - (startX - x), frame.width - startX);
+  if (visibleWidth <= 0) {
+    return;
   }
+
+  std::u32string glyphs = ToGlyphString(text);
+  if (static_cast<int>(glyphs.size()) > visibleWidth) {
+    glyphs.resize(static_cast<size_t>(visibleWidth));
+  }
+
+  draw_text(frame, startX, y, glyphs, widgetId);
 }
 
 }  // namespace
@@ -46,27 +82,34 @@ Frame ComposeLayoutToFrame(const CgulDocument& doc) {
     const int x1 = widget.boundsCells.x + widget.boundsCells.w - 1;
     const int y1 = widget.boundsCells.y + widget.boundsCells.h - 1;
 
-    draw_box(frame, x0, y0, x1, y1, widget.id);
+    DrawBoxBorder(frame, x0, y0, x1, y1, widget.id);
 
     if (widget.kind == WidgetKind::Window) {
-      DrawWindowTitleBar(frame, x0, x1, y0, widget.id);
+      const std::string title =
+          widget.title.empty() ? ("Window " + std::to_string(widget.id)) : widget.title;
+      DrawClippedText(frame, x0 + 2, y0, title, std::max(0, widget.boundsCells.w - 4), widget.id);
+
+      const int interiorWidth = widget.boundsCells.w - 2;
+      const int interiorHeight = widget.boundsCells.h - 2;
+      if (interiorWidth > 0 && interiorHeight > 0) {
+        const std::string line1 = "W x H: " + std::to_string(widget.boundsCells.w) + " x " +
+                                  std::to_string(widget.boundsCells.h);
+        DrawClippedText(frame, x0 + 1, y0 + 1, line1, interiorWidth, widget.id);
+
+        if (interiorHeight > 1) {
+          const std::string line2 = "pos: " + std::to_string(widget.boundsCells.x) + "," +
+                                    std::to_string(widget.boundsCells.y);
+          DrawClippedText(frame, x0 + 1, y0 + 2, line2, interiorWidth, widget.id);
+        }
+      }
+
+      continue;
     }
 
     if (!widget.title.empty()) {
-      int textY = (widget.kind == WidgetKind::Window) ? y0 : y0 + 1;
-      textY = std::clamp(textY, y0, y1);
-
-      int textX = (widget.kind == WidgetKind::Window) ? x0 + 2 : x0 + 1;
-      textX = std::clamp(textX, x0, x1);
-
-      const int available = x1 - textX + 1;
-      if (available > 0) {
-        std::u32string title = ToGlyphString(widget.title);
-        if (static_cast<int>(title.size()) > available) {
-          title.resize(static_cast<size_t>(available));
-        }
-        draw_text(frame, textX, textY, title, widget.id);
-      }
+      const int textY = std::clamp(y0 + 1, y0, y1);
+      DrawClippedText(frame, x0 + 1, textY, widget.title, std::max(0, widget.boundsCells.w - 2),
+                      widget.id);
     }
   }
 

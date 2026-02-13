@@ -1,11 +1,14 @@
 #include "cgul/core/equality.h"
 #include "cgul/io/cgul_document.h"
+#include "cgul/render/layout_composer.h"
 #include "cgul/validate/validate.h"
+#include "glyph_grid_renderer.h"
 
 #include <SFML/Graphics.hpp>
 
 #include <algorithm>
 #include <cstdint>
+#include <exception>
 #include <filesystem>
 #include <iostream>
 #include <optional>
@@ -21,8 +24,8 @@ constexpr int kDefaultGridW = 60;
 constexpr int kDefaultGridH = 30;
 constexpr int kCellSizePx = 16;
 constexpr int kTopBarPx = 42;
-constexpr int kMinWindowW = 10;
-constexpr int kMinWindowH = 6;
+constexpr int kMinWinWCells = 14;
+constexpr int kMinWinHCells = 4;
 constexpr int kInitialWindowCount = 5;
 
 struct CliOptions {
@@ -31,6 +34,7 @@ struct CliOptions {
   std::string savePath = "demo_layout.cgul";
   std::optional<std::string> startupSavePath;
   std::optional<std::string> startupLoadPath;
+  bool startGlyphMode = false;
   bool exitAfterStartup = false;
 };
 
@@ -107,6 +111,17 @@ bool ParseInt(const std::string& text, int* outValue) {
   return true;
 }
 
+void PrintUsage(const char* exe) {
+  std::cout
+      << exe << " options:\n"
+      << "  --seed <u32>            Initial deterministic seed (default: 42)\n"
+      << "  --windows <N>           Initial desired window count (default: 5)\n"
+      << "  --save <path>           Save document on startup\n"
+      << "  --load <path>           Load document on startup\n"
+      << "  --glyph                 Start in glyph mode\n"
+      << "  --exit-after-startup    Exit after startup load/save actions\n";
+}
+
 bool ParseArgs(int argc, char** argv, CliOptions* outOptions, std::string* outError) {
   if (outOptions == nullptr) {
     if (outError != nullptr) {
@@ -176,19 +191,18 @@ bool ParseArgs(int argc, char** argv, CliOptions* outOptions, std::string* outEr
       continue;
     }
 
+    if (arg == "--glyph") {
+      options.startGlyphMode = true;
+      continue;
+    }
+
     if (arg == "--exit-after-startup") {
       options.exitAfterStartup = true;
       continue;
     }
 
     if (arg == "--help" || arg == "-h") {
-      std::cout
-          << "cgul_demo_sfml options:\n"
-          << "  --seed <u32>            Initial deterministic seed (default: 42)\n"
-          << "  --windows <N>           Initial desired window count (default: 5)\n"
-          << "  --save <path>           Save document on startup\n"
-          << "  --load <path>           Load document on startup\n"
-          << "  --exit-after-startup    Exit after startup load/save actions\n";
+      PrintUsage(argv[0]);
       return false;
     }
 
@@ -253,25 +267,9 @@ uint32_t FindTopWidgetAtCell(const cgul::CgulDocument& doc, int cellX, int cellY
   return 0;
 }
 
-bool IsValidDoc(const cgul::CgulDocument& doc, const std::string& context) {
-  std::string error;
-  if (!cgul::Validate(doc, &error)) {
-    std::cerr << context << " validation failed: " << error << "\n";
-    return false;
-  }
-  return true;
-}
-
 std::optional<cgul::CgulDocument> GenerateDeterministicLayout(uint32_t seed, int desiredWindowCount,
                                                               int gridW, int gridH) {
-  cgul::CgulDocument best;
-  best.cgulVersion = "0.1";
-  best.gridWCells = gridW;
-  best.gridHCells = gridH;
-  best.seed = seed;
-
   std::mt19937_64 rng(seed);
-
   int targetCount = std::max(1, desiredWindowCount);
 
   while (targetCount >= 1) {
@@ -284,13 +282,20 @@ std::optional<cgul::CgulDocument> GenerateDeterministicLayout(uint32_t seed, int
     bool allPlaced = true;
     for (int i = 0; i < targetCount; ++i) {
       const uint32_t id = static_cast<uint32_t>(i + 1);
-
       bool placed = false;
       cgul::RectI placedRect{};
 
       for (int attempt = 0; attempt < 1500 && !placed; ++attempt) {
-        std::uniform_int_distribution<int> widthDist(kMinWindowW, std::min(24, gridW));
-        std::uniform_int_distribution<int> heightDist(kMinWindowH, std::min(14, gridH));
+        const int maxW = std::min(24, gridW);
+        const int maxH = std::min(14, gridH);
+        const int minW = std::min(kMinWinWCells, maxW);
+        const int minH = std::min(kMinWinHCells, maxH);
+        if (maxW <= 0 || maxH <= 0) {
+          break;
+        }
+
+        std::uniform_int_distribution<int> widthDist(minW, maxW);
+        std::uniform_int_distribution<int> heightDist(minH, maxH);
 
         const int w = widthDist(rng);
         const int h = heightDist(rng);
@@ -331,11 +336,9 @@ std::optional<cgul::CgulDocument> GenerateDeterministicLayout(uint32_t seed, int
       doc.widgets.push_back(std::move(widget));
     }
 
-    if (allPlaced) {
-      std::string error;
-      if (cgul::Validate(doc, &error)) {
-        return doc;
-      }
+    std::string error;
+    if (allPlaced && cgul::Validate(doc, &error)) {
+      return doc;
     }
 
     --targetCount;
@@ -399,18 +402,18 @@ bool LoadDocumentFile(const std::string& path, cgul::CgulDocument* outDoc) {
   return true;
 }
 
-bool PixelToCell(const sf::Vector2i& pixel, int* outCellX, int* outCellY) {
+bool PixelToCell(const sf::Vector2i& pixel, int gridW, int gridH, int* outCellX, int* outCellY) {
   if (outCellX == nullptr || outCellY == nullptr) {
     return false;
   }
 
-  if (pixel.y < kTopBarPx) {
+  if (pixel.y < kTopBarPx || pixel.x < 0) {
     return false;
   }
 
   const int cx = pixel.x / kCellSizePx;
   const int cy = (pixel.y - kTopBarPx) / kCellSizePx;
-  if (cx < 0 || cy < 0) {
+  if (cx < 0 || cy < 0 || cx >= gridW || cy >= gridH) {
     return false;
   }
 
@@ -430,24 +433,20 @@ bool TryLoadFont(sf::Font* outFont, std::string* outLoadedPath) {
     return false;
   }
 
-  const std::vector<fs::path> candidates = {
-      fs::path("assets") / "fonts" / "DejaVuSansMono.ttf",
-      fs::path("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"),
-  };
-
-  for (const fs::path& candidate : candidates) {
-    if (!fs::exists(candidate)) {
-      continue;
-    }
-    if (outFont->openFromFile(candidate.string())) {
-      if (outLoadedPath != nullptr) {
-        *outLoadedPath = candidate.string();
-      }
-      return true;
-    }
+  const fs::path fontPath = fs::path("assets") / "fonts" / "cgul_mono.ttf";
+  if (!fs::exists(fontPath)) {
+    return false;
   }
 
-  return false;
+  if (!outFont->openFromFile(fontPath.string())) {
+    return false;
+  }
+
+  if (outLoadedPath != nullptr) {
+    *outLoadedPath = fontPath.string();
+  }
+
+  return true;
 }
 
 void DrawGrid(sf::RenderWindow& window, int gridW, int gridH) {
@@ -481,8 +480,8 @@ void DrawText(sf::RenderWindow& window, const sf::Font* font, const std::string&
   window.draw(drawable);
 }
 
-void DrawDocument(sf::RenderWindow& window, const cgul::CgulDocument& doc, const sf::Font* font,
-                  uint32_t hoveredId, uint32_t activeId) {
+void DrawPixelDocument(sf::RenderWindow& window, const cgul::CgulDocument& doc, const sf::Font* font,
+                       uint32_t hoveredId, uint32_t activeId) {
   for (const cgul::Widget& widget : doc.widgets) {
     const sf::FloatRect pxRect = WindowPixelRect(widget.boundsCells);
 
@@ -547,6 +546,7 @@ int RunApp(const CliOptions& options) {
   uint32_t currentSeed = options.seed;
   int desiredWindowCount = std::max(1, options.windowCount);
   std::string activeSavePath = options.savePath;
+  bool glyphMode = options.startGlyphMode;
 
   if (options.startupLoadPath.has_value()) {
     activeSavePath = *options.startupLoadPath;
@@ -591,6 +591,9 @@ int RunApp(const CliOptions& options) {
     std::cerr << "Warning: monospace font not found; rendering without text labels\n";
   }
 
+  GlyphGridRenderer glyphRenderer;
+  glyphRenderer.SetFont(fontPtr);
+
   bool showGrid = false;
   EditState edit;
 
@@ -606,6 +609,11 @@ int RunApp(const CliOptions& options) {
 
         if (scancode == sf::Keyboard::Scancode::Escape) {
           window.close();
+          continue;
+        }
+
+        if (scancode == sf::Keyboard::Scancode::F1) {
+          glyphMode = !glyphMode;
           continue;
         }
 
@@ -686,7 +694,7 @@ int RunApp(const CliOptions& options) {
 
         int cellX = 0;
         int cellY = 0;
-        if (!PixelToCell(pixel, &cellX, &cellY)) {
+        if (!PixelToCell(pixel, doc.gridWCells, doc.gridHCells, &cellX, &cellY)) {
           continue;
         }
 
@@ -723,7 +731,7 @@ int RunApp(const CliOptions& options) {
 
         int cellX = 0;
         int cellY = 0;
-        if (!PixelToCell(moved->position, &cellX, &cellY)) {
+        if (!PixelToCell(moved->position, doc.gridWCells, doc.gridHCells, &cellX, &cellY)) {
           continue;
         }
 
@@ -745,8 +753,13 @@ int RunApp(const CliOptions& options) {
           int newW = cellX - x + 1;
           int newH = cellY - y + 1;
 
-          newW = std::clamp(newW, kMinWindowW, candidate.gridWCells - x);
-          newH = std::clamp(newH, kMinWindowH, candidate.gridHCells - y);
+          const int maxW = std::max(1, candidate.gridWCells - x);
+          const int maxH = std::max(1, candidate.gridHCells - y);
+          const int minW = std::min(kMinWinWCells, maxW);
+          const int minH = std::min(kMinWinHCells, maxH);
+
+          newW = std::clamp(newW, minW, maxW);
+          newH = std::clamp(newH, minH, maxH);
 
           candidateWidget->boundsCells.w = newW;
           candidateWidget->boundsCells.h = newH;
@@ -756,12 +769,21 @@ int RunApp(const CliOptions& options) {
       }
     }
 
+    const cgul::Frame frame = cgul::ComposeLayoutToFrame(doc);
+
     const sf::Vector2i mousePixel = sf::Mouse::getPosition(window);
+    std::optional<sf::Vector2i> hoveredCell;
     int hoverCellX = 0;
     int hoverCellY = 0;
-    uint32_t hoveredId = 0;
-    if (PixelToCell(mousePixel, &hoverCellX, &hoverCellY)) {
-      hoveredId = FindTopWidgetAtCell(doc, hoverCellX, hoverCellY);
+    if (PixelToCell(mousePixel, doc.gridWCells, doc.gridHCells, &hoverCellX, &hoverCellY)) {
+      hoveredCell = sf::Vector2i(hoverCellX, hoverCellY);
+    }
+
+    uint32_t hoveredPixelId = 0;
+    uint32_t hoveredGlyphId = 0;
+    if (hoveredCell.has_value()) {
+      hoveredPixelId = FindTopWidgetAtCell(doc, hoveredCell->x, hoveredCell->y);
+      hoveredGlyphId = cgul::hit_test_widget(frame, hoveredCell->x, hoveredCell->y);
     }
 
     window.clear(sf::Color(28, 30, 35));
@@ -780,16 +802,34 @@ int RunApp(const CliOptions& options) {
 
     DrawText(window, fontPtr, "Generate (G)", 18.f, 12.f, 14, sf::Color::White);
 
-    const std::string status = "Seed: " + std::to_string(currentSeed) +
-                               "   Windows: " + std::to_string(desiredWindowCount) +
-                               "   Save/Load: S/L   Grid: F3";
-    DrawText(window, fontPtr, status, 150.f, 12.f, 14, sf::Color(220, 220, 220));
-
-    if (showGrid) {
-      DrawGrid(window, doc.gridWCells, doc.gridHCells);
+    std::string hoverText = "Hover: (-,-) wid=0";
+    if (hoveredCell.has_value()) {
+      hoverText = "Hover: (" + std::to_string(hoveredCell->x) + "," + std::to_string(hoveredCell->y) +
+                  ") wid=" + std::to_string(hoveredGlyphId);
     }
 
-    DrawDocument(window, doc, fontPtr, hoveredId, edit.widgetId);
+    std::string modeText = glyphMode ? "Mode: GLYPH (F1)" : "Mode: PIXEL (F1)";
+    const std::string status = modeText + "  " + hoverText + "  Seed: " + std::to_string(currentSeed) +
+                               "  Windows: " + std::to_string(desiredWindowCount) +
+                               "  Save/Load: S/L  Grid: F3";
+    DrawText(window, fontPtr, status, 150.f, 12.f, 14, sf::Color(220, 220, 220));
+
+    if (!glyphMode) {
+      if (showGrid) {
+        DrawGrid(window, doc.gridWCells, doc.gridHCells);
+      }
+      DrawPixelDocument(window, doc, fontPtr, hoveredPixelId, edit.widgetId);
+    } else {
+      GlyphGridRenderConfig config;
+      config.cellPx = kCellSizePx;
+      config.drawCellBackgrounds = false;
+      config.drawGridDots = showGrid;
+      config.dotGlyph = U'.';
+      config.drawHoveredCell = true;
+      glyphRenderer.SetHoveredCell(hoveredCell);
+      const sf::Vector2f gridOriginPx(0.f, static_cast<float>(kTopBarPx));
+      glyphRenderer.Draw(window, frame, config, gridOriginPx);
+    }
 
     window.display();
   }
