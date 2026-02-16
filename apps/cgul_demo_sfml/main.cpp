@@ -434,16 +434,16 @@ bool TryLoadFont(sf::Font* outFont, std::string* outLoadedPath) {
   }
 
   const fs::path fontPath = fs::path("assets") / "fonts" / "cgul_mono.ttf";
+  if (outLoadedPath != nullptr) {
+    *outLoadedPath = fontPath.string();
+  }
+
   if (!fs::exists(fontPath)) {
     return false;
   }
 
   if (!outFont->openFromFile(fontPath.string())) {
     return false;
-  }
-
-  if (outLoadedPath != nullptr) {
-    *outLoadedPath = fontPath.string();
   }
 
   return true;
@@ -571,6 +571,15 @@ int RunApp(const CliOptions& options) {
     }
   }
 
+  sf::Font font;
+  std::string fontPath;
+  if (TryLoadFont(&font, &fontPath)) {
+    std::cout << "Loaded font: " << fontPath << "\n";
+  } else {
+    std::cerr << "Error: failed to load required monospace font from '" << fontPath << "'\n";
+    return 1;
+  }
+
   if (options.exitAfterStartup) {
     return 0;
   }
@@ -581,16 +590,7 @@ int RunApp(const CliOptions& options) {
   sf::RenderWindow window(sf::VideoMode({windowW, windowH}), "CGUL Demo SFML v0");
   window.setFramerateLimit(60);
 
-  sf::Font font;
-  const sf::Font* fontPtr = nullptr;
-  std::string fontPath;
-  if (TryLoadFont(&font, &fontPath)) {
-    fontPtr = &font;
-    std::cout << "Loaded font: " << fontPath << "\n";
-  } else {
-    std::cerr << "Warning: monospace font not found; rendering without text labels\n";
-  }
-
+  const sf::Font* fontPtr = &font;
   GlyphGridRenderer glyphRenderer;
   glyphRenderer.SetFont(fontPtr);
 
