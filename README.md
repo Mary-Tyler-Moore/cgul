@@ -84,18 +84,6 @@ CGUL adds a **semantic, deterministic representation** of UI that is:
 
 ---
 
-## CGUL Demo (Pixel ↔ Glyph)
-
-![CGUL Demo — Pixel and Glyph modes](.github/assets/readme/cgul-demo.gif)
-
-This GIF shows the flagship SFML demo generating the same deterministic window layout and toggling between:
-- **Pixel mode** (traditional rendering), and
-- **Glyph mode** (CGUL cell-grid rendering)
-
-Same UI meaning. Two renderers. One `.cgul` document.
-
----
-
 ## CGUL Demo (SFML v0)
 
 ![CGUL Demo SFML v0](.github/assets/readme/cgul-v0.png)
@@ -117,6 +105,18 @@ Controls:
 Details: `docs/demo_app.md`
 
 The SFML demo uses a single repo-owned monospace font: `assets/fonts/cgul_mono.ttf`.
+
+---
+
+## CGUL Demo (Pixel ↔ Glyph)
+
+![CGUL Demo — Pixel and Glyph modes](.github/assets/readme/cgul-demo.gif)
+
+This GIF shows the flagship SFML demo generating the same deterministic window layout and toggling between:
+- **Pixel mode** (traditional rendering), and
+- **Glyph mode** (CGUL cell-grid rendering)
+
+Same UI meaning. Two renderers. One `.cgul` document.
 
 ---
 
