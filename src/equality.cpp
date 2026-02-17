@@ -56,6 +56,20 @@ bool Equal(const CgulDocument& a, const CgulDocument& b, std::string* outDiff) {
     return fail("seed mismatch: expected " + std::to_string(a.seed) + " got " +
                 std::to_string(b.seed));
   }
+  if (a.meta.size() != b.meta.size()) {
+    return fail("meta size mismatch: expected " + std::to_string(a.meta.size()) + " got " +
+                std::to_string(b.meta.size()));
+  }
+  for (const auto& entry : a.meta) {
+    const auto it = b.meta.find(entry.first);
+    if (it == b.meta.end()) {
+      return fail("meta key missing: " + entry.first);
+    }
+    if (entry.second != it->second) {
+      return fail("meta value mismatch for key \"" + entry.first + "\": expected \"" +
+                  entry.second + "\" got \"" + it->second + "\"");
+    }
+  }
   if (a.widgets.size() != b.widgets.size()) {
     return fail("widget count mismatch: expected " + std::to_string(a.widgets.size()) + " got " +
                 std::to_string(b.widgets.size()));

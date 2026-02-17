@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -33,6 +34,7 @@ struct CgulDocument {
   int gridHCells = 0;
   uint64_t seed = 0;
   std::vector<Widget> widgets;
+  std::map<std::string, std::string> meta;
 };
 
 const char* ToString(WidgetKind kind);

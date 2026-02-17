@@ -10,9 +10,11 @@ if (NOT CGUL_CXX_STANDARD STREQUAL "17" AND NOT CGUL_CXX_STANDARD STREQUAL "20")
 endif()
 
 option(CGUL_BUILD_SFML_DEMO "Build SFML demo app" OFF)
+option(CGUL_BUILD_IMGUI_DEMO "Build ImGui SDL2 demo app" OFF)
 
 message(STATUS "CGUL_CXX_STANDARD: ${CGUL_CXX_STANDARD}")
 message(STATUS "CGUL_BUILD_SFML_DEMO: ${CGUL_BUILD_SFML_DEMO}")
+message(STATUS "CGUL_BUILD_IMGUI_DEMO: ${CGUL_BUILD_IMGUI_DEMO}")
 if (CGUL_BUILD_SFML_DEMO)
   message(STATUS "SFML FetchContent: ENABLED (SFML will be fetched)")
 else()
@@ -93,6 +95,10 @@ if (CGUL_BUILD_SFML_DEMO)
     CXX_STANDARD_REQUIRED YES
     CXX_EXTENSIONS NO
   )
+endif()
+
+if (CGUL_BUILD_IMGUI_DEMO)
+  add_subdirectory(apps/cgul_imgui_demo)
 endif()
 
 enable_testing()

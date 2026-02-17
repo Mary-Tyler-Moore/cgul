@@ -461,6 +461,19 @@ bool SaveCgulFile(const std::string& path, const CgulDocument& doc, std::string*
   os << "    \"h\": " << doc.gridHCells << "\n";
   os << "  },\n";
   os << "  \"seed\": " << doc.seed << ",\n";
+  if (!doc.meta.empty()) {
+    os << "  \"meta\": {\n";
+    size_t metaIndex = 0;
+    for (const auto& entry : doc.meta) {
+      os << "    \"" << EscapeString(entry.first) << "\": \"" << EscapeString(entry.second) << "\"";
+      if (metaIndex + 1 < doc.meta.size()) {
+        os << ",";
+      }
+      os << "\n";
+      ++metaIndex;
+    }
+    os << "  },\n";
+  }
   os << "  \"widgets\": [";
 
   if (!doc.widgets.empty()) {
@@ -587,6 +600,19 @@ bool LoadCgulFile(const std::string& path, CgulDocument* outDoc, std::string* ou
     return false;
   }
   doc.seed = static_cast<uint64_t>(seedValue->intValue);
+
+  const JsonValue* metaValue = FindObjectKey(root, "meta");
+  if (metaValue != nullptr) {
+    if (!RequireType(*metaValue, JsonValue::Type::Object, "meta", outError)) {
+      return false;
+    }
+    for (const auto& entry : metaValue->objectValue) {
+      if (!RequireType(entry.second, JsonValue::Type::String, "meta." + entry.first, outError)) {
+        return false;
+      }
+      doc.meta[entry.first] = entry.second.stringValue;
+    }
+  }
 
   const JsonValue* widgetsValue = FindObjectKey(root, "widgets");
   if (widgetsValue == nullptr) {

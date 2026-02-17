@@ -1,0 +1,21 @@
+{
+  "cgulVersion": "0.1",
+  "grid": {
+    "w": 1,
+    "h": 1
+  },
+  "seed": 0,
+  "meta": {
+    "cgul_imgui_demo.cameraTileX": "0.000000",
+    "cgul_imgui_demo.cameraTileY": "0.000000",
+    "cgul_imgui_demo.chunkHeightTiles": "25",
+    "cgul_imgui_demo.chunkType": "island",
+    "cgul_imgui_demo.chunkWidthTiles": "25",
+    "cgul_imgui_demo.exportNonEmptyOnly": "true",
+    "cgul_imgui_demo.inputPath": "/home/ty/Dev/cgul-dev/cgul/./apps/cgul_imgui_demo/assets/tilemap.json",
+    "cgul_imgui_demo.outputRoot": "/home/ty/Dev/cgul-dev/cgul/./apps/cgul_imgui_demo/assets/chunks",
+    "cgul_imgui_demo.tileSizeIndex": "1",
+    "cgul_imgui_demo.zoom": "1.948717"
+  },
+  "widgets": []
+}

@@ -44,10 +44,34 @@ CGUL adds a **semantic, deterministic representation** of UI that is:
 * `schemas/examples/` — example `.cgul` documents
 * `include/cgul/` + `src/` — portable core + IO + validation + rendering helpers
 
-### ✅ Tools
+### ✅ Command-line tools
 
-* `cgul_cli` — terminal renderer + `.cgul` save/load + hit-test + JSON frame dump
-* `cgul_smoke` — round-trip regression tests for every example under `schemas/examples/`
+* **`cgul_cli`** — render `.cgul` in the terminal + hit-test + JSON frame dump  
+  Use it to inspect layouts quickly and verify the semantic model → frame pipeline.
+
+* **`cgul_smoke`** — format stability suite (round-trip every file in `schemas/examples/`)  
+  Load → validate → save → reload → semantic-compare.
+
+### ✅ Apps / demos
+
+* **`cgul_demo_sfml`** (SFML 3) — flagship “CGUL in action” reference app  
+  Deterministic generation + edit (move/resize) + save/load `.cgul` with round-trip equality.
+
+* **`apps/cgul_imgui_demo`** (SDL2 + Dear ImGui) — proof-of-concept “tool UI ↔ CGUL UI”  
+  A working chunk exporter that can be viewed as:
+  - **Default ImGui widgets** (panels + pixel viewport), or
+  - **CGUL UI** (fullscreen glyph-grid UI rendered from a `cgul::Frame`)
+
+  Controls:
+  - `TAB`: toggle Default UI ↔ CGUL UI
+  - Viewport: RMB drag / arrows pan / `+/-` zoom / `[` `]` fine / `0` reset
+  - State: `Ctrl+S` save / `Ctrl+L` load (and buttons in CGUL mode)
+  - Saves to: `apps/cgul_imgui_demo/assets/cgul_imgui_demo_state.cgul`
+
+  Code entry points:
+  - `apps/cgul_imgui_demo/main.cpp` — SDL2 + ImGui loop, input, mode toggle, save/load wiring
+  - `apps/cgul_imgui_demo/src/render/CgulUiRenderer.*` — CGUL fullscreen glyph UI renderer
+  - `apps/cgul_imgui_demo/src/chunkexporter/tools/ChunkExporterTool.*` — exporter pipeline + UI state
 
 ### ✅ Flagship demo (SFML 3)
 
@@ -96,6 +120,17 @@ The SFML demo uses a single repo-owned monospace font: `assets/fonts/cgul_mono.t
 
 ---
 
+## CGUL ImGui Demo (SDL2 + Dear ImGui)
+
+![CGUL ImGui Demo — Default UI ↔ CGUL UI](.github/assets/readme/cgul-imgui-demo.gif)
+
+This demo validates CGUL in a second renderer stack (SDL2 + Dear ImGui) and proves the “same UI meaning → multiple presentations” idea in a practical tool workflow:
+
+* a normal **ImGui widget UI**, and
+* a **CGUL-rendered glyph UI** (fullscreen `cgul::Frame`).
+
+---
+
 ## Milestones
 
 ### Step 01 — CGUL v0.1 foundation ✅
@@ -120,6 +155,19 @@ The SFML demo uses a single repo-owned monospace font: `assets/fonts/cgul_mono.t
   - **Pixel renderer** (rectangles + SFML text)
   - **Glyph renderer** (composed `cgul::Frame` drawn as a cell grid)
 - Added aligned grid background (`F3`) and minimum window sizes to keep text readable
+
+### Step 05 — SDL2 + ImGui proof-of-concept ✅
+
+* Added `apps/cgul_imgui_demo/` as a second front-end implementation path for CGUL
+* Integrated SDL2 + Dear ImGui (with vendored backends under `src/imgui_backends/`)
+* Built a working **Chunk Exporter** toolchain:
+
+  * Tiled JSON parsing + atlas loading (`src/chunkexporter/tiled/`)
+  * export options + progress/status (`src/chunkexporter/tools/ChunkExporterTool.*`)
+* Implemented **TAB** toggle between:
+
+  * Default ImGui UI (widget panels + pixel viewport)
+  * CGUL UI (fullscreen glyph-grid UI via `src/render/CgulUiRenderer.*`)
 
 ---
 
